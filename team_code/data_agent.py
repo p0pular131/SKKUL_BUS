@@ -1,7 +1,9 @@
 """
 Child of the autopilot that additionally runs data collection and storage.
 """
-
+from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
+if not hasattr(CarlaDataProvider, 'active_scenarios'):
+    CarlaDataProvider.active_scenarios = []
 import cv2
 import carla
 import random
@@ -107,9 +109,9 @@ class DataAgent(AutoPilot):
     if self.save_path is not None and (self.datagen or self.tmp_visu):
       result += [{
           'type': 'sensor.camera.rgb',
-          'x': self.config.camera_pos[0],
+          'x':3.8,
           'y': self.config.camera_pos[1],
-          'z': self.config.camera_pos[2],
+          'z': 3.0,
           'roll': self.config.camera_rot_0[0],
           'pitch': self.config.camera_rot_0[1],
           'yaw': self.config.camera_rot_0[2],
@@ -119,9 +121,9 @@ class DataAgent(AutoPilot):
           'id': 'rgb'
       }, {
           'type': 'sensor.camera.rgb',
-          'x': self.config.camera_pos[0],
+          'x': 3.8,
           'y': self.config.camera_pos[1] + self.augmentation_translation,
-          'z': self.config.camera_pos[2],
+          'z': 3.0,
           'roll': self.config.camera_rot_0[0],
           'pitch': self.config.camera_rot_0[1],
           'yaw': self.config.camera_rot_0[2] + self.augmentation_rotation,
@@ -131,9 +133,9 @@ class DataAgent(AutoPilot):
           'id': 'rgb_augmented'
       }, {
           'type': 'sensor.camera.semantic_segmentation',
-          'x': self.config.camera_pos[0],
+          'x': 3.8,
           'y': self.config.camera_pos[1],
-          'z': self.config.camera_pos[2],
+          'z': 3.0,
           'roll': self.config.camera_rot_0[0],
           'pitch': self.config.camera_rot_0[1],
           'yaw': self.config.camera_rot_0[2],
@@ -143,9 +145,9 @@ class DataAgent(AutoPilot):
           'id': 'semantics'
       }, {
           'type': 'sensor.camera.semantic_segmentation',
-          'x': self.config.camera_pos[0],
+          'x': 3.8,
           'y': self.config.camera_pos[1] + self.augmentation_translation,
-          'z': self.config.camera_pos[2],
+          'z': 3.0,
           'roll': self.config.camera_rot_0[0],
           'pitch': self.config.camera_rot_0[1],
           'yaw': self.config.camera_rot_0[2] + self.augmentation_rotation,
@@ -155,9 +157,9 @@ class DataAgent(AutoPilot):
           'id': 'semantics_augmented'
       }, {
           'type': 'sensor.camera.depth',
-          'x': self.config.camera_pos[0],
+          'x':3.8,
           'y': self.config.camera_pos[1],
-          'z': self.config.camera_pos[2],
+          'z': 3.0,
           'roll': self.config.camera_rot_0[0],
           'pitch': self.config.camera_rot_0[1],
           'yaw': self.config.camera_rot_0[2],
@@ -167,9 +169,9 @@ class DataAgent(AutoPilot):
           'id': 'depth'
       }, {
           'type': 'sensor.camera.depth',
-          'x': self.config.camera_pos[0],
+          'x': 3.8,
           'y': self.config.camera_pos[1] + self.augmentation_translation,
-          'z': self.config.camera_pos[2],
+          'z': 3.0,
           'roll': self.config.camera_rot_0[0],
           'pitch': self.config.camera_rot_0[1],
           'yaw': self.config.camera_rot_0[2] + self.augmentation_rotation,
@@ -183,7 +185,7 @@ class DataAgent(AutoPilot):
         'type': 'sensor.lidar.ray_cast',
         'x': self.config.lidar_pos[0],
         'y': self.config.lidar_pos[1],
-        'z': self.config.lidar_pos[2],
+        'z':3.0,
         'roll': self.config.lidar_rot[0],
         'pitch': self.config.lidar_rot[1],
         'yaw': self.config.lidar_rot[2],
@@ -347,14 +349,28 @@ class DataAgent(AutoPilot):
   def shuffle_weather(self):
     # change weather for visual diversity
     if self.weather_tmp is None:
-      t = carla.WeatherParameters
-      options = dir(t)[:22]
-      chosen_preset = random.choice(options)
-      self.chosen_preset = chosen_preset
-      weather = t.__getattribute__(t, chosen_preset)
+      presets = carla.WeatherParameters
+      # env var 있으면 그 값, 없으면 기존 랜덤 방식
+      preset_name = os.environ.get('WEATHER_PRESET', None)
+      if preset_name and hasattr(presets, preset_name):
+        weather = getattr(presets, preset_name)
+      else:
+        # 기존 랜덤 fallback
+        choices = [n for n in dir(presets) if not n.startswith('_')]
+        weather = getattr(presets, random.choice(choices))
       self.weather_tmp = weather
-
+    # 실제 날씨 적용
     self._world.set_weather(self.weather_tmp)
+
+    # if self.weather_tmp is None:
+    #   t = carla.WeatherParameters
+    #   options = dir(t)[:22]
+    #   chosen_preset = random.choice(options)
+    #   self.chosen_preset = chosen_preset
+    #   weather = t.__getattribute__(t, chosen_preset)
+    #   self.weather_tmp = weather
+
+    # self._world.set_weather(self.weather_tmp)
 
     # night mode
     vehicles = self._world.get_actors().filter('*vehicle*')

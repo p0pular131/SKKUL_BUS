@@ -277,12 +277,12 @@ class SensorAgent(autonomous_agent.AutonomousAgent):
     sensors = [{
         'type': 'sensor.camera.rgb',
         # 'x': self.config.camera_pos[0],
-        'x': 4.3,
+        'x': 3.8,
 
         'y': self.config.camera_pos[1],
 
         # 'z': self.config.camera_pos[2],
-        'z': 2.0,
+        'z': 3.0,
 
         'roll': self.config.camera_rot_0[0],
         'pitch': self.config.camera_rot_0[1],

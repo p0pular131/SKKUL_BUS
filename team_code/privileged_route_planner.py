@@ -739,6 +739,7 @@ class PrivilegedRoutePlanner(object):
 
     # Load speed limit data from file
     file_name_speed_limits = f"team_code/speed_limits/{map_name}_speed_limits.npy"
+    file_name_speed_limits = "/home/heven/SKKUL_BUS/team_code/speed_limits/Town01_speed_limits.npy"
     file_content = np.load(file_name_speed_limits, allow_pickle=True)
     map_data = file_content.item()
 
